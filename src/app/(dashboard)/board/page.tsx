@@ -14,7 +14,7 @@ import { ChevronDown, Plus, Zap, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function BoardPage() {
-  const { activeCampaignId, setActiveCampaignId, viewMode, panelLeadId, closePanel, filters } = useDashStore()
+  const { activeCampaignId, setActiveCampaignId, viewMode, panelLeadId, filters } = useDashStore()
   const { campaigns, loading: campaignsLoading } = useCampaigns()
   const [activityOpen, setActivityOpen] = useState(false)
   const [importOpen, setImportOpen]     = useState(false)
@@ -26,12 +26,9 @@ export default function BoardPage() {
   }, [campaigns, activeCampaignId, setActiveCampaignId])
 
   const { leads, loading: leadsLoading, updateLocal } = useLeads(activeCampaignId)
-
-  // Full lead detail fetched when panel opens
   const { data: panelLead, loading: panelLoading, updateLocal: updatePanelLocal } = useLeadDetail(panelLeadId)
 
-  // Filtered count for toolbar display
-  const filteredCount = leads.filter(l => {
+  const filteredCount = leads.filter((l: any) => {
     if (filters.search) {
       const q = filters.search.toLowerCase()
       if (!l.full_name.toLowerCase().includes(q) && !l.company?.toLowerCase().includes(q)) return false
@@ -48,7 +45,6 @@ export default function BoardPage() {
   return (
     <div className="flex flex-col h-screen overflow-hidden">
 
-      {/* Topbar */}
       <header
         className="flex items-center gap-3 px-5 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex-shrink-0"
         style={{ height: 'var(--topbar-h)' }}
@@ -76,24 +72,16 @@ export default function BoardPage() {
 
         <div className="flex-1" />
 
-        {/* Actions */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActivityOpen(o => !o)}
-            className={cn(
-              'btn btn-ghost btn-sm gap-1.5',
-              activityOpen && 'bg-gray-100 dark:bg-gray-800 text-brand-500',
-            )}
+            className={cn('btn btn-ghost btn-sm gap-1.5', activityOpen && 'bg-gray-100 dark:bg-gray-800 text-brand-500')}
           >
             <Activity size={13} />
             <span className="hidden md:inline">Activity</span>
           </button>
-          <button
-            onClick={() => setImportOpen(true)}
-            className="btn btn-secondary btn-sm gap-1.5"
-          >
-            <Plus size={12} />
-            Import leads
+          <button onClick={() => setImportOpen(true)} className="btn btn-secondary btn-sm gap-1.5">
+            <Plus size={12} /> Import leads
           </button>
           <button className="btn btn-primary btn-sm gap-1.5">
             <Zap size={12} />
@@ -102,20 +90,12 @@ export default function BoardPage() {
         </div>
       </header>
 
-      {/* Toolbar */}
       <Toolbar totalLeads={leads.length} filteredCount={filteredCount} />
 
-      {/* Main area */}
       <div className="flex flex-1 overflow-hidden">
-
-        {/* Board / Table / Analytics */}
         <div className="flex-1 overflow-hidden">
           {viewMode === 'kanban' && (
-            <KanbanBoard
-              leads={leads}
-              loading={leadsLoading || campaignsLoading}
-              onLeadUpdated={handleLeadUpdate}
-            />
+            <KanbanBoard leads={leads} loading={leadsLoading || campaignsLoading} onLeadUpdated={handleLeadUpdate} />
           )}
           {viewMode === 'table' && (
             <TableView leads={leads} loading={leadsLoading || campaignsLoading} />
@@ -125,7 +105,6 @@ export default function BoardPage() {
           )}
         </div>
 
-        {/* Activity feed sidebar */}
         {activityOpen && (
           <div className="w-72 flex-shrink-0 border-l border-gray-100 dark:border-gray-800 overflow-hidden">
             <ActivityFeed campaignId={activeCampaignId} onClose={() => setActivityOpen(false)} />
@@ -133,16 +112,14 @@ export default function BoardPage() {
         )}
       </div>
 
-      {/* Lead detail panel */}
       {panelLeadId && (
         <LeadPanel
-          lead={panelLead}
+          lead={panelLead as any}
           loading={panelLoading}
           onUpdate={handleLeadUpdate}
         />
       )}
 
-      {/* Import modal */}
       {importOpen && activeCampaignId && (
         <ImportModal
           campaignId={activeCampaignId}
