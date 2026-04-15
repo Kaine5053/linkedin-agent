@@ -12,8 +12,9 @@ import type { LeadStage } from '@/types'
 // GET — full lead detail with comments, dm_drafts, pending_actions
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   let authedUser: { id: string }
   try { authedUser = await requireAuth(req.headers.get('Authorization')) }
   catch { return NextResponse.json({ error: 'Unauthorised' }, { status: 401 }) }
@@ -34,7 +35,7 @@ export async function GET(
         id, action_type, status, execute_after, created_at, completed_at, result
       )
     `)
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', authedUser.id)
     .single()
 
@@ -82,8 +83,9 @@ function normaliseStage(stage: string): string {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   let authedUser: { id: string }
   try {
     authedUser = await requireAuth(req.headers.get('Authorization'))
@@ -97,7 +99,7 @@ export async function PATCH(
   const { data: existing, error: fetchErr } = await supabase
     .from('leads')
     .select('id, stage, user_id')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', authedUser.id)
     .single()
 
@@ -132,7 +134,7 @@ export async function PATCH(
   const { data: updated, error: updateErr } = await supabase
     .from('leads')
     .update(updates)
-    .eq('id', params.id)
+    .eq('id', id)
     .select()
     .single()
 
@@ -144,7 +146,7 @@ export async function PATCH(
   if (body.stage && body.stage !== existing.stage) {
     await auditStageChange({
       user_id:    authedUser.id,
-      lead_id:    params.id,
+      lead_id:    id,
       from_stage: existing.stage,
       to_stage:   body.stage,
       reason:     'manual override',
@@ -156,8 +158,9 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   let authedUser: { id: string }
   try {
     authedUser = await requireAuth(req.headers.get('Authorization'))
@@ -171,7 +174,7 @@ export async function DELETE(
   const { error } = await supabase
     .from('leads')
     .update({ stage: 'archived', last_activity_at: new Date().toISOString() })
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', authedUser.id)
 
   if (error) {
@@ -180,7 +183,7 @@ export async function DELETE(
 
   await audit({
     user_id:    authedUser.id,
-    lead_id:    params.id,
+    lead_id:    id,
     event_type: 'lead.archived',
     payload:    { method: 'manual' },
   })

@@ -9,8 +9,9 @@ import { audit } from '@/lib/utils/audit'
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   let authedUser: { id: string }
   try {
     authedUser = await requireAuth(req.headers.get('Authorization'))
@@ -40,7 +41,7 @@ export async function PATCH(
   const { data, error } = await supabase
     .from('campaigns')
     .update(updates)
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', authedUser.id)
     .select()
     .single()
@@ -52,7 +53,7 @@ export async function PATCH(
   await audit({
     user_id:    authedUser.id,
     event_type: 'campaign.updated',
-    payload:    { campaign_id: params.id, updates },
+    payload:    { campaign_id: id, updates },
   })
 
   return NextResponse.json({ campaign: data })
@@ -60,8 +61,9 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   let authedUser: { id: string }
   try {
     authedUser = await requireAuth(req.headers.get('Authorization'))
@@ -74,7 +76,7 @@ export async function DELETE(
   const { error } = await supabase
     .from('campaigns')
     .update({ status: 'archived' })
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', authedUser.id)
 
   if (error) {

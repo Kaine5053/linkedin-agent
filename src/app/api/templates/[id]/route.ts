@@ -8,8 +8,9 @@ import { requireAuth, createServerClient } from '@/lib/supabase/client'
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   let authedUser: { id: string }
   try {
     authedUser = await requireAuth(req.headers.get('Authorization'))
@@ -39,7 +40,7 @@ export async function PATCH(
   const { data, error } = await supabase
     .from('templates')
     .update(updates)
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', authedUser.id)
     .select()
     .single()
@@ -50,8 +51,9 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   let authedUser: { id: string }
   try {
     authedUser = await requireAuth(req.headers.get('Authorization'))
@@ -64,7 +66,7 @@ export async function DELETE(
   const { error } = await supabase
     .from('templates')
     .delete()
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', authedUser.id)
 
   if (error) return NextResponse.json({ error: 'Delete failed' }, { status: 500 })

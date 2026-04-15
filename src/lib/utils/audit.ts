@@ -33,6 +33,15 @@ export type AuditEventType =
   | 'campaign.created'
   | 'campaign.updated'
   | 'error.worker'
+  // Worker controls
+  | 'pause_on'
+  | 'pause_off'
+  | 'safe_mode_on'
+  | 'safe_mode_off'
+  // Manual overrides
+  | 'action.manual_trigger'
+  | 'action.manual_skip'
+  | 'action.manual_reschedule'
 
 interface AuditPayload {
   user_id: string
