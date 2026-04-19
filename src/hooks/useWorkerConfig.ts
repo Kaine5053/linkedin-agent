@@ -4,11 +4,9 @@
 // useNotifications — realtime unread count + list
 // ============================================================
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createBrowserClient } from '@/lib/supabase/client'
 import { useApiCall } from './index'
-
-// ── useWorkerConfig ────────────────────────────────────────
 
 interface WorkerConfig {
   id:                         string
@@ -24,7 +22,7 @@ interface WorkerConfig {
 
 export function useWorkerConfig() {
   const call    = useApiCall()
-  const sb      = createBrowserClient()
+  const sb      = useMemo(() => createBrowserClient(), [])
   const [config, setConfig]   = useState<WorkerConfig | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving]   = useState(false)
@@ -39,19 +37,20 @@ export function useWorkerConfig() {
 
   useEffect(() => { load() }, [load])
 
-  // Realtime — config changes propagate immediately across tabs
   useEffect(() => {
-    const ch = sb.channel('worker-config-live')
-      .on('postgres_changes', {
+    const channelName = `worker-config-${Math.random().toString(36).slice(2)}`
+    const ch = sb
+      .channel(channelName)
+      .on('postgres_changes' as any, {
         event: 'UPDATE', schema: 'public', table: 'worker_config',
-      }, payload => {
-        setConfig(prev => prev ? { ...prev, ...(payload.new as any) } : prev)
+      }, (payload: any) => {
+        setConfig(prev => prev ? { ...prev, ...payload.new } : prev)
       })
       .subscribe()
     return () => { sb.removeChannel(ch) }
   }, [sb])
 
-  const update = useCallback(async (updates: Partial<WorkerConfig> & { reason?: string }) => {
+  const update = useCallback(async (updates: any) => {
     setSaving(true)
     try {
       const data = await call('/api/worker/config', {
@@ -70,8 +69,6 @@ export function useWorkerConfig() {
   return { config, loading, saving, update, pause, resume, setSafe }
 }
 
-// ── useNotifications ──────────────────────────────────────
-
 interface AppNotification {
   id:         string
   type:       string
@@ -85,7 +82,7 @@ interface AppNotification {
 
 export function useNotifications() {
   const call    = useApiCall()
-  const sb      = createBrowserClient()
+  const sb      = useMemo(() => createBrowserClient(), [])
   const [items, setItems]         = useState<AppNotification[]>([])
   const [unreadCount, setUnread]  = useState(0)
   const [loading, setLoading]     = useState(true)
@@ -101,19 +98,20 @@ export function useNotifications() {
 
   useEffect(() => { load() }, [load])
 
-  // Realtime — new notifications appear instantly
   useEffect(() => {
-    const ch = sb.channel('notif-live')
-      .on('postgres_changes', {
+    const channelName = `notif-${Math.random().toString(36).slice(2)}`
+    const ch = sb
+      .channel(channelName)
+      .on('postgres_changes' as any, {
         event: 'INSERT', schema: 'public', table: 'in_app_notifications',
-      }, payload => {
+      }, (payload: any) => {
         const n = payload.new as AppNotification
         setItems(prev => [n, ...prev.slice(0, 29)])
         setUnread(c => c + 1)
       })
-      .on('postgres_changes', {
+      .on('postgres_changes' as any, {
         event: 'UPDATE', schema: 'public', table: 'in_app_notifications',
-      }, payload => {
+      }, (payload: any) => {
         const updated = payload.new as AppNotification
         setItems(prev => prev.map(n => n.id === updated.id ? updated : n))
         if (updated.read) setUnread(c => Math.max(0, c - 1))

@@ -61,8 +61,8 @@ export function useLeads(campaignId: string | null) {
 
   useEffect(() => {
     if (!campaignId) return
-    const ch = sb.channel(`leads:${campaignId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads', filter: `campaign_id=eq.${campaignId}` }, (payload: any) => {
+    const ch = sb.channel(`leads-${campaignId}-${Math.random().toString(36).slice(2)}`)
+      .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'leads', filter: `campaign_id=eq.${campaignId}` }, (payload: any) => {
         if (payload.eventType === 'UPDATE') setLeads(prev => prev.map((l: any) => l.id === payload.new.id ? { ...l, ...payload.new } : l))
         if (payload.eventType === 'INSERT') setLeads(prev => [payload.new, ...prev])
         if (payload.eventType === 'DELETE') setLeads(prev => prev.filter((l: any) => l.id !== payload.old.id))
@@ -98,8 +98,8 @@ export function useDmQueue() {
   }, [call])
   useEffect(() => { fetchDrafts() }, [fetchDrafts])
   useEffect(() => {
-    const ch = sb.channel('dm-drafts')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'dm_drafts' }, () => fetchDrafts())
+    const ch = sb.channel(`dm-drafts-${Math.random().toString(36).slice(2)}`)
+      .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'dm_drafts' }, () => fetchDrafts())
       .subscribe()
     return () => { sb.removeChannel(ch) }
   }, [sb, fetchDrafts])

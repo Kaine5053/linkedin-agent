@@ -29,7 +29,13 @@ export async function GET(req: NextRequest) {
   if (unreadOnly) query = query.eq('read', false)
 
   const { data, error } = await query
-  if (error) return NextResponse.json({ error: 'Fetch failed' }, { status: 500 })
+  if (error) {
+    // Table might not exist yet — return empty state instead of 500
+    if (error.code === '42P01') {
+      return NextResponse.json({ notifications: [], unread_count: 0 })
+    }
+    return NextResponse.json({ error: 'Fetch failed' }, { status: 500 })
+  }
 
   const unreadCount = (data ?? []).filter((n: any) => !n.read).length
 
