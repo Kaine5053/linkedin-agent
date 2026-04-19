@@ -13,7 +13,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://linkedin-agent-rho.vercel.app/board',
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     })
     if (error) {
@@ -28,8 +28,6 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           <div className="h-1.5 bg-gradient-to-r from-blue-500 via-blue-400 to-purple-500" />
           <div className="px-8 py-8">
-
-            {/* Logo */}
             <div className="flex items-center gap-3 mb-8">
               <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
                 <svg width="17" height="17" viewBox="0 0 17 17" fill="none">

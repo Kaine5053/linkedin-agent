@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect unauthenticated users to login (except public paths)
-  const publicPaths = ['/login', '/api/webhooks']
+  const publicPaths = ['/login', '/auth/callback', '/api/webhooks']
   const isPublic    = publicPaths.some(p => pathname.startsWith(p))
 
   if (!user && !isPublic && !pathname.startsWith('/api')) {
